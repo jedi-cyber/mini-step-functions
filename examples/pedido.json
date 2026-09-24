@@ -1,0 +1,31 @@
+{
+  "Comment": "Pedido completo: tareas locales simuladas, Retry, Catch, Parallel y Wait.",
+  "StartAt": "Inicio",
+  "States": {
+    "Inicio": {"Type": "Pass", "Next": "ValidarPedido"},
+    "ValidarPedido": {"Type": "Task", "Resource": "task:validar_pedido", "Next": "PedidoValido"},
+    "PedidoValido": {
+      "Type": "Choice",
+      "Choices": [{"Variable": "$.pedido_valido", "BooleanEquals": true, "Next": "VerificarStock"}],
+      "Default": "PedidoRechazado"
+    },
+    "PedidoRechazado": {"Type": "Fail", "Error": "PedidoInvalido", "Cause": "El pedido requiere ID entero positivo y total positivo."},
+    "VerificarStock": {"Type": "Task", "Resource": "task:verificar_stock", "Next": "ProcesarPago"},
+    "ProcesarPago": {
+      "Type": "Task", "Resource": "task:demo_procesar_pago", "Next": "CompletarPedido",
+      "Retry": [{"ErrorEquals": ["PaymentTimeout"], "IntervalSeconds": 2, "MaxAttempts": 3, "BackoffRate": 2}],
+      "Catch": [{"ErrorEquals": ["States.ALL"], "Next": "ErrorDePago"}]
+    },
+    "ErrorDePago": {"Type": "Fail", "Error": "PagoFallido", "Cause": "No se pudo procesar el pago. Consulta el evento ProcesarPago para ver la causa original."},
+    "CompletarPedido": {
+      "Type": "Parallel",
+      "Branches": [
+        {"StartAt": "GenerarFactura", "States": {"GenerarFactura": {"Type": "Task", "Resource": "task:generar_factura", "End": true}}},
+        {"StartAt": "EnviarCorreo", "States": {"EnviarCorreo": {"Type": "Task", "Resource": "task:enviar_correo", "End": true}}}
+      ],
+      "Next": "EsperarConfirmacion"
+    },
+    "EsperarConfirmacion": {"Type": "Wait", "Seconds": 3, "Next": "PedidoCompletado"},
+    "PedidoCompletado": {"Type": "Succeed"}
+  }
+}

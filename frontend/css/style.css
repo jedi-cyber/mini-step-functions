@@ -1,0 +1,16 @@
+body { background: #f5f7fb; color: #202c40; }
+.container { max-width: 1140px; }
+.card { border-color: #dce3ed; }
+.json-panel { background: #152238; color: #e0ecff; padding: 1.25rem; border-radius: .5rem; max-height: 32rem; overflow: auto; white-space: pre-wrap; overflow-wrap: anywhere; }
+textarea.font-monospace { tab-size: 2; }
+summary { cursor: pointer; }
+.diagram-output { overflow: auto; min-height: 160px; padding: 1rem; background: white; }
+.diagram-output svg { min-width: 500px; }
+.diagram-status { padding: .25rem .5rem; border-radius: .3rem; border: 1px solid #334155; color: #0f172a; font-size: .8rem; }
+.diagram-status.PENDING { background: #e2e8f0; }
+.diagram-status.RUNNING { background: #bfdbfe; }
+.diagram-status.SUCCEEDED { background: #bbf7d0; }
+.diagram-status.FAILED { background: #fecaca; }
+.diagram-status.RETRYING { background: #fde68a; }
+.diagram-status.WAITING { background: #ddd6fe; }
+td, th { vertical-align: middle; }
