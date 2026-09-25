@@ -35,7 +35,7 @@ function page_id(): int {
 function page_start(string $title): void { ?>
 <!doctype html><html lang="es"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
 <title><?= h($title) ?> · Mini Step Functions</title>
-<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+<link href="vendor/bootstrap/bootstrap.min.css" rel="stylesheet">
 <link href="css/style.css" rel="stylesheet"></head><body>
 <nav class="navbar navbar-dark bg-dark"><div class="container flex-wrap gap-3">
 <a class="navbar-brand" href="index.php">Mini Step Functions</a>
