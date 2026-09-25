@@ -1821,7 +1821,32 @@
         )
         .addEventListener(
             'click',
-            () => {
+            async () => {
+
+                // =============================================
+                // VALIDAR DE NUEVO ANTES DE GUARDAR
+                // =============================================
+
+                if (!validateWorkflow()) {
+                    return;
+                }
+
+
+                const button =
+                    document.getElementById(
+                        'btn-confirm-save'
+                    );
+
+
+                const message =
+                    document.getElementById(
+                        'save-modal-message'
+                    );
+
+
+                // =============================================
+                // CREAR PAYLOAD
+                // =============================================
 
                 const payload = {
 
@@ -1842,18 +1867,182 @@
                 };
 
 
-                console.log(
-                    'Workflow preparado:',
-                    payload
-                );
+                // =============================================
+                // DESACTIVAR BOTÓN
+                // =============================================
+
+                button.disabled = true;
+
+                const originalText =
+                    button.textContent;
 
 
-                document
-                    .getElementById(
-                        'save-modal-message'
-                    )
-                    .textContent =
-                    'Workflow preparado. En el siguiente paso lo enviaremos a FastAPI.';
+                button.textContent =
+                    'Guardando...';
+
+
+                message.className =
+                    'small text-secondary';
+
+                message.textContent =
+                    'Enviando workflow al servidor...';
+
+
+                try {
+
+                    // =========================================
+                    // ENVIAR AL ENDPOINT PHP
+                    // =========================================
+
+                    const response =
+                        await fetch(
+                            'api/workflow-save.php',
+                            {
+                                method: 'POST',
+
+                                headers: {
+                                    'Content-Type':
+                                        'application/json',
+
+                                    'Accept':
+                                        'application/json'
+                                },
+
+                                body:
+                                    JSON.stringify(
+                                        payload
+                                    )
+                            }
+                        );
+
+
+                    // =========================================
+                    // LEER RESPUESTA
+                    // =========================================
+
+                    let result;
+
+
+                    try {
+
+                        result =
+                            await response.json();
+
+                    } catch (error) {
+
+                        throw new Error(
+                            'El servidor devolvió una respuesta inválida.'
+                        );
+                    }
+
+
+                    // =========================================
+                    // ERROR DEL SERVIDOR
+                    // =========================================
+
+                    if (
+                        !response.ok ||
+                        !result.success
+                    ) {
+
+                        throw new Error(
+                            result.message ||
+                            'No se pudo guardar el workflow.'
+                        );
+                    }
+
+
+                    // =========================================
+                    // GUARDADO CORRECTO
+                    // =========================================
+
+                    const workflow =
+                        result.workflow;
+
+
+                    message.className =
+                        'small text-success';
+
+                    message.textContent =
+                        `Workflow guardado correctamente. ID: ${workflow.id}`;
+
+
+                    showMessage(
+                        `Workflow "${workflow.name}" guardado correctamente.`,
+                        'success'
+                    );
+
+
+                    // =========================================
+                    // CERRAR MODAL
+                    // =========================================
+
+                    const modalElement =
+                        document.getElementById(
+                            'saveWorkflowModal'
+                        );
+
+
+                    const modal =
+                        bootstrap.Modal
+                            .getInstance(
+                                modalElement
+                            );
+
+
+                    // Esperamos un pequeño momento solamente
+                    // para que el usuario vea el mensaje.
+                    setTimeout(
+                        () => {
+
+                            if (modal) {
+                                modal.hide();
+                            }
+
+
+                            // =================================
+                            // REDIRIGIR AL WORKFLOW
+                            // =================================
+
+                            window.location.href =
+                                `workflow-view.php?id=${workflow.id}`;
+
+                        },
+                        700
+                    );
+
+
+                } catch (error) {
+
+                    console.error(
+                        'Error guardando workflow:',
+                        error
+                    );
+
+
+                    message.className =
+                        'small text-danger';
+
+
+                    message.textContent =
+                        error.message;
+
+
+                    showMessage(
+                        `No se pudo guardar el workflow:\n${error.message}`,
+                        'danger'
+                    );
+
+
+                } finally {
+
+                    button.disabled =
+                        false;
+
+
+                    button.textContent =
+                        originalText;
+                }
             }
         );
 
