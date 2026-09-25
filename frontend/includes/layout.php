@@ -39,8 +39,24 @@ function page_start(string $title): void { ?>
 <link href="css/style.css" rel="stylesheet"></head><body>
 <nav class="navbar navbar-dark bg-dark"><div class="container flex-wrap gap-3">
 <a class="navbar-brand" href="index.php">Mini Step Functions</a>
-<div class="d-flex gap-3"><a class="text-white" href="index.php">Dashboard</a><a class="text-white" href="workflows.php">Workflows</a><a class="text-white" href="executions.php">Ejecuciones</a></div>
-</div></nav><main class="container py-4"><h1 class="h2 mb-4"><?= h($title) ?></h1>
+<div class="d-flex gap-3">
+    <a class="text-white" href="index.php">
+        Dashboard
+    </a>
+
+    <a class="text-white" href="workflows.php">
+        Workflows
+    </a>
+
+    <a class="text-white" href="workflow-designer.php">
+        Diseñador
+    </a>
+
+    <a class="text-white" href="executions.php">
+        Ejecuciones
+    </a>
+</div>
+</nav><main class="container py-4"><h1 class="h2 mb-4"><?= h($title) ?></h1>
 <?php }
 function page_end(): void { echo '</main></body></html>'; }
 function show_error(Throwable $error): void {

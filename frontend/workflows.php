@@ -1,5 +1,21 @@
 <?php require __DIR__ . '/includes/layout.php'; page_start('Workflows'); ?>
-<a class="btn btn-primary mb-3" href="workflow-create.php">Crear workflow</a>
+<div class="d-flex gap-2 mb-3">
+
+    <a
+        class="btn btn-primary"
+        href="workflow-designer.php"
+    >
+        Crear workflow visual
+    </a>
+
+    <a
+        class="btn btn-outline-primary"
+        href="workflow-create.php"
+    >
+        Crear desde JSON
+    </a>
+
+</div>
 <?php try { $items = api_all('workflows'); ?>
 <?php if (!$items): ?><div class="alert alert-info">Todavía no hay workflows.</div><?php else: ?>
 <div class="table-responsive"><table class="table table-hover align-middle"><thead><tr><th>ID</th><th>Nombre</th><th>Activo</th><th>Creado</th><th>Acciones</th></tr></thead><tbody>
