@@ -251,7 +251,9 @@ page_start('Diseñador de Workflow');
                     type="button"
                     class="state-item"
                     data-state-type="Parallel"
-                    draggable="true"
+                    draggable="false"
+                    disabled
+                    aria-describedby="parallel-help"
                 >
 
                     <span class="state-icon">
@@ -262,7 +264,7 @@ page_start('Diseñador de Workflow');
                         <strong>Parallel</strong>
 
                         <small>
-                            Ejecuta ramas paralelas
+                            Disponible mediante JSON
                         </small>
                     </span>
 
@@ -270,6 +272,12 @@ page_start('Diseñador de Workflow');
 
 
                 <!-- SUCCEED -->
+
+                <p id="parallel-help" class="small text-secondary">
+                    Parallel está soportado por el motor. Sus ramas se crean
+                    mediante <a href="workflow-create.php">JSON</a>;
+                    el diseñador visual todavía no permite configurarlas.
+                </p>
 
                 <button
                     type="button"

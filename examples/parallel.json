@@ -1,1 +1,33 @@
-
+{
+  "Comment": "Ejecutar con {}. Dos ramas independientes producen una lista de resultados en el orden declarado.",
+  "StartAt": "ProcesarEnParalelo",
+  "States": {
+    "ProcesarEnParalelo": {
+      "Type": "Parallel",
+      "Branches": [
+        {
+          "StartAt": "PrepararResumen",
+          "States": {
+            "PrepararResumen": {
+              "Type": "Pass",
+              "Result": {"rama": "resumen", "completada": true},
+              "End": true
+            }
+          }
+        },
+        {
+          "StartAt": "PrepararNotificacion",
+          "States": {
+            "PrepararNotificacion": {
+              "Type": "Pass",
+              "Result": {"rama": "notificacion", "completada": true},
+              "End": true
+            }
+          }
+        }
+      ],
+      "Next": "Completado"
+    },
+    "Completado": {"Type": "Succeed"}
+  }
+}

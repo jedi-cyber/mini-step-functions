@@ -85,6 +85,14 @@
     cursor: grabbing;
 }
 
+.state-item:disabled {
+    cursor: not-allowed;
+    background: #e9ecef;
+    border-color: #dee2e6;
+    color: #6c757d;
+    transform: none;
+}
+
 .state-item small {
     display: block;
     color: #6c757d;

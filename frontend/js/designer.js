@@ -591,6 +591,11 @@
         y
     ) {
 
+        if (type === 'Parallel') {
+            showMessage('Parallel está disponible mediante JSON. El diseñador visual todavía no permite configurar sus ramas.', 'warning');
+            return;
+        }
+
         const configuration =
             getStateConfiguration(type);
 
@@ -660,6 +665,8 @@
         )
         .forEach(
             button => {
+
+                if (button.disabled) return;
 
                 button.addEventListener(
                     'click',
@@ -848,6 +855,28 @@
     editor.on(
         'nodeRemoved',
         () => {
+
+            const nodes = getNodes();
+            const names = new Set(Object.values(nodes).map(node => node.data.stateName));
+            for (const [id, node] of Object.entries(nodes)) {
+                if (node.data.type === 'Task' && node.data.catchNext && !names.has(node.data.catchNext)) {
+                    editor.updateNodeDataFromId(id, {
+                        ...node.data,
+                        catchNext: '',
+                        catchEnabled: false
+                    });
+                }
+            }
+
+            if (!nodes[startNodeId]) startNodeId = Object.keys(nodes)[0] || null;
+            if (selectedNodeId && nodes[selectedNodeId]) {
+                selectNode(selectedNodeId);
+            } else {
+                selectedNodeId = null;
+                propertiesForm.classList.add('d-none');
+                propertiesEmpty.classList.remove('d-none');
+            }
+            updateStartStateStyles();
 
             updateCanvasStatus();
 
@@ -2070,70 +2099,9 @@ function updateSelectedNode() {
                 }
 
 
-                const deletedName =
-                    node.data.stateName;
-
-
-                const deletedId =
-                    String(
-                        selectedNodeId
-                    );
-
-
                 editor.removeNodeId(
                     `node-${selectedNodeId}`
                 );
-
-
-                // Limpiar Catch que apunte
-                // al nodo eliminado.
-                Object
-                    .values(
-                        getNodes()
-                    )
-                    .forEach(
-                        candidate => {
-
-                            if (
-                                candidate.data
-                                    .catchNext ===
-                                deletedName
-                            ) {
-
-                                candidate.data
-                                    .catchNext =
-                                    '';
-
-                                candidate.data
-                                    .catchEnabled =
-                                    false;
-
-
-                                editor
-                                    .updateNodeDataFromId(
-                                        candidate.id,
-                                        candidate.data
-                                    );
-                            }
-                        }
-                    );
-
-
-                if (
-                    String(startNodeId) ===
-                    deletedId
-                ) {
-
-                    const remaining =
-                        Object.keys(
-                            getNodes()
-                        );
-
-
-                    startNodeId =
-                        remaining[0] ||
-                        null;
-                }
 
 
                 selectedNodeId =
@@ -2411,22 +2379,7 @@ function updateSelectedNode() {
                         'Parallel'
                     ) {
 
-                        state.Branches =
-                            [];
-
-
-                        const next =
-                            getOutputTarget(
-                                node,
-                                'output_1'
-                            );
-
-
-                        if (next) {
-
-                            state.Next =
-                                next;
-                        }
+                        throw new Error('Parallel está disponible mediante JSON. Elimina este nodo del diseñador visual y crea sus ramas en la página de creación JSON.');
                     }
 
 
@@ -2521,13 +2474,17 @@ function updateSelectedNode() {
     // =========================================================
 
     function updateJsonPreview() {
-
-        workflowJson.value =
-            JSON.stringify(
-                buildWorkflowDefinition(),
-                null,
-                2
-            );
+        try {
+            workflowJson.value =
+                JSON.stringify(
+                    buildWorkflowDefinition(),
+                    null,
+                    2
+                );
+        } catch (error) {
+            workflowJson.value = '';
+            showMessage(error.message, 'warning');
+        }
     }
 
 
@@ -2585,9 +2542,13 @@ function updateSelectedNode() {
     // =========================================================
 
     function validateWorkflow() {
-
-        const definition =
-            buildWorkflowDefinition();
+        let definition;
+        try {
+            definition = buildWorkflowDefinition();
+        } catch (error) {
+            showMessage(error.message, 'warning');
+            return false;
+        }
 
 
         const errors =

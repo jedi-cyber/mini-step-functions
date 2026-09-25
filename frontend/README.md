@@ -9,7 +9,8 @@ $env:FASTAPI_URL = "http://127.0.0.1:8000"
 php -S 127.0.0.1:8080 -t frontend
 ```
 
-Abre http://127.0.0.1:8080. Bootstrap 5.3.3 se carga desde CDN y requiere conexión a Internet para los estilos.
+Abre http://127.0.0.1:8080. Bootstrap se sirve desde `vendor/bootstrap/`.
+Drawflow y Mermaid se cargan desde CDN y requieren conexión a Internet.
 
 En otra terminal, desde backend:
 

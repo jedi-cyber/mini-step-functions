@@ -1,1 +1,27 @@
-
+{
+  "Comment": "Ejecutar con {\"aprobado\": true} para aprobar o {\"aprobado\": false} para rechazar.",
+  "StartAt": "RecibirSolicitud",
+  "States": {
+    "RecibirSolicitud": {
+      "Type": "Pass",
+      "Next": "EvaluarAprobacion"
+    },
+    "EvaluarAprobacion": {
+      "Type": "Choice",
+      "Choices": [
+        {
+          "Variable": "$.aprobado",
+          "BooleanEquals": true,
+          "Next": "Aprobada"
+        }
+      ],
+      "Default": "Rechazada"
+    },
+    "Aprobada": {"Type": "Succeed"},
+    "Rechazada": {
+      "Type": "Fail",
+      "Error": "SolicitudRechazada",
+      "Cause": "La solicitud no fue aprobada."
+    }
+  }
+}

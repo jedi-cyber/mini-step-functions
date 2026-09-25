@@ -106,6 +106,45 @@ class ApiTest(unittest.TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertIn("/api/workflows/{id}/execute", response.json()["paths"])
 
+    def test_deactivate_and_reactivate_preserves_execution_history(self):
+        workflow_id = self.create({**self.body, "is_active": True})
+        url = f"/api/workflows/{workflow_id}"
+
+        response = self.client.post(url + "/execute", json={"input": {"id": 1}})
+        self.assertEqual(response.status_code, 200, response.text)
+        first = response.json()
+        self.assertEqual(first["status"], "SUCCEEDED")
+
+        response = self.client.put(url, json={**self.body, "is_active": False})
+        self.assertEqual(response.status_code, 200, response.text)
+        self.assertFalse(response.json()["is_active"])
+
+        # Las peticiones manuales repetidas no deben generar ejecuciones.
+        for _ in range(2):
+            response = self.client.post(url + "/execute", json={"input": {}})
+            self.assertEqual(response.status_code, 409, response.text)
+        with self.sessions() as db:
+            executions = db.scalars(
+                select(Execution).where(Execution.workflow_id == workflow_id)
+            ).all()
+            self.assertEqual([execution.id for execution in executions], [first["execution_id"]])
+            self.assertEqual(executions[0].status, "SUCCEEDED")
+            self.assertEqual(executions[0].output, {"id": 1})
+
+        response = self.client.put(url, json={**self.body, "is_active": True})
+        self.assertEqual(response.status_code, 200, response.text)
+        self.assertTrue(response.json()["is_active"])
+        response = self.client.post(url + "/execute", json={"input": {"id": 2}})
+        self.assertEqual(response.status_code, 200, response.text)
+        self.assertEqual(response.json()["status"], "SUCCEEDED")
+        self.assertNotEqual(response.json()["execution_id"], first["execution_id"])
+        with self.sessions() as db:
+            total = db.scalar(
+                select(func.count()).select_from(Execution)
+                .where(Execution.workflow_id == workflow_id)
+            )
+            self.assertEqual(total, 2)
+
     def test_inactive_workflow_cannot_execute(self):
         from app.models import Execution
         from sqlalchemy import select, func

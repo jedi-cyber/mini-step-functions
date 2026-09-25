@@ -1,6 +1,5 @@
 from datetime import datetime
 from pydantic import BaseModel, ConfigDict, Field, JsonValue, field_validator
-from app.engine.engine import WorkflowEngine
 
 
 class WorkflowWrite(BaseModel):
