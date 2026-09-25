@@ -1251,6 +1251,74 @@
             );
     }
 
+    // =========================================================
+    // ACTUALIZAR REFERENCIAS CATCH AL RENOMBRAR UN ESTADO
+    // =========================================================
+
+    function updateCatchReferences(
+        oldName,
+        newName
+    ) {
+
+        if (
+            !oldName ||
+            !newName ||
+            oldName === newName
+        ) {
+            return;
+        }
+
+
+        Object
+            .entries(
+                getNodes()
+            )
+            .forEach(
+                ([id, candidate]) => {
+
+                    if (
+                        candidate.data.type !==
+                        'Task'
+                    ) {
+                        return;
+                    }
+
+
+                    if (
+                        candidate.data.catchNext !==
+                        oldName
+                    ) {
+                        return;
+                    }
+
+
+                    const realNode =
+                        editor.getNodeFromId(
+                            id
+                        );
+
+
+                    if (!realNode) {
+                        return;
+                    }
+
+
+                    const updatedData = {
+                        ...realNode.data,
+
+                        catchNext:
+                            newName
+                    };
+
+
+                    editor
+                        .updateNodeDataFromId(
+                            id,
+                            updatedData
+                        );
+                }
+            );
+    }
 
     // =========================================================
     // ACTUALIZAR ESTADO
@@ -1266,78 +1334,138 @@
         );
 
 
-    function updateSelectedNode() {
+function updateSelectedNode() {
 
-        if (!selectedNodeId) {
+    // =====================================================
+    // COMPROBAR SELECCIÓN
+    // =====================================================
 
-            showMessage(
-                'Selecciona un estado.',
-                'warning'
-            );
+    if (!selectedNodeId) {
 
-            return;
-        }
+        showMessage(
+            'Selecciona un estado.',
+            'warning'
+        );
 
-
-        const node =
-            editor
-                .getNodeFromId(
-                    selectedNodeId
-                );
+        return;
+    }
 
 
-        if (!node) {
-            return;
-        }
+    const node =
+        editor.getNodeFromId(
+            selectedNodeId
+        );
 
 
-        const newName =
-            propertyStateName
-                .value
-                .trim();
+    if (!node) {
+        return;
+    }
 
 
-        if (!newName) {
+    // =====================================================
+    // CONSERVAR NOMBRE ORIGINAL
+    // =====================================================
 
-            showMessage(
-                'El estado necesita un nombre.',
-                'danger'
-            );
-
-            return;
-        }
+    const oldName =
+        node.data.stateName;
 
 
-        // =====================================================
-        // EVITAR NOMBRES DUPLICADOS
-        // =====================================================
+    const newName =
+        propertyStateName
+            .value
+            .trim();
 
-        const duplicated =
-            Object
-                .entries(
-                    getNodes()
-                )
-                .some(
-                    ([id, candidate]) => {
 
-                        return (
-                            String(id) !==
+    // =====================================================
+    // VALIDAR NOMBRE
+    // =====================================================
+
+    if (!newName) {
+
+        showMessage(
+            'El estado necesita un nombre.',
+            'danger'
+        );
+
+        return;
+    }
+
+
+    // =====================================================
+    // EVITAR NOMBRES DUPLICADOS
+    // =====================================================
+
+    const duplicated =
+        Object
+            .entries(
+                getNodes()
+            )
+            .some(
+                ([id, candidate]) => {
+
+                    return (
+                        String(id) !==
                             String(
                                 selectedNodeId
                             ) &&
 
-                            candidate.data
-                                .stateName ===
+                        candidate.data
+                            .stateName ===
                             newName
-                        );
-                    }
-                );
+                    );
+                }
+            );
 
 
-        if (duplicated) {
+    if (duplicated) {
+
+        showMessage(
+            `Ya existe un estado "${newName}".`,
+            'danger'
+        );
+
+        return;
+    }
+
+
+    // =====================================================
+    // CREAR COPIA TEMPORAL
+    //
+    // IMPORTANTE:
+    // todavía NO modificamos Drawflow.
+    // =====================================================
+
+    const updatedData = {
+        ...node.data,
+
+        stateName:
+            newName
+    };
+
+
+    // =====================================================
+    // TASK
+    // =====================================================
+
+    if (
+        node.data.type ===
+        'Task'
+    ) {
+
+        // -------------------------------------------------
+        // RESOURCE
+        // -------------------------------------------------
+
+        const resource =
+            propertyResource
+                .value
+                .trim();
+
+
+        if (!resource) {
 
             showMessage(
-                `Ya existe un estado "${newName}".`,
+                'Task necesita un Resource.',
                 'danger'
             );
 
@@ -1345,217 +1473,72 @@
         }
 
 
-        node.data.stateName =
-            newName;
-
-
-        // =====================================================
-        // START AT
-        // =====================================================
-
         if (
-            propertyStartAt
-                .checked
+            !VALID_RESOURCES.includes(
+                resource
+            )
         ) {
 
-            startNodeId =
-                String(
-                    selectedNodeId
-                );
+            showMessage(
+                `Resource no registrado: ${resource}.`,
+                'danger'
+            );
+
+            return;
         }
 
 
-        // =====================================================
-        // TASK
-        // =====================================================
+        updatedData.resource =
+            resource;
+
+
+        // =================================================
+        // RETRY
+        // =================================================
+
+        updatedData.retryEnabled =
+            propertyRetryEnabled
+                .checked;
+
 
         if (
-            node.data.type ===
-            'Task'
+            updatedData.retryEnabled
         ) {
 
-            node.data.resource =
-                propertyResource
-                    .value
-                    .trim();
-
-
-            // -------------------------------------------------
-            // RETRY
-            // -------------------------------------------------
-
-            node.data.retryEnabled =
-                propertyRetryEnabled
-                    .checked;
-
-
-            if (
-                node.data
-                    .retryEnabled
-            ) {
-
-                const maxAttempts =
-                    Number(
-                        propertyRetryMaxAttempts
-                            .value
-                    );
-
-
-                const intervalSeconds =
-                    Number(
-                        propertyRetryInterval
-                            .value
-                    );
-
-
-                const backoffRate =
-                    Number(
-                        propertyRetryBackoff
-                            .value
-                    );
-
-
-                if (
-                    !Number.isInteger(
-                        maxAttempts
-                    ) ||
-                    maxAttempts < 0
-                ) {
-
-                    showMessage(
-                        'MaxAttempts debe ser un entero mayor o igual a 0.',
-                        'danger'
-                    );
-
-                    return;
-                }
-
-
-                if (
-                    !Number.isFinite(
-                        intervalSeconds
-                    ) ||
-                    intervalSeconds < 0
-                ) {
-
-                    showMessage(
-                        'IntervalSeconds debe ser un número mayor o igual a 0.',
-                        'danger'
-                    );
-
-                    return;
-                }
-
-
-                if (
-                    !Number.isFinite(
-                        backoffRate
-                    ) ||
-                    backoffRate < 1
-                ) {
-
-                    showMessage(
-                        'BackoffRate debe ser un número mayor o igual a 1.',
-                        'danger'
-                    );
-
-                    return;
-                }
-
-
-                node.data.retryMaxAttempts =
-                    maxAttempts;
-
-
-                node.data.retryIntervalSeconds =
-                    intervalSeconds;
-
-
-                node.data.retryBackoffRate =
-                    backoffRate;
-            }
-
-
-            // -------------------------------------------------
-            // CATCH
-            // -------------------------------------------------
-
-            node.data.catchEnabled =
-                propertyCatchEnabled
-                    .checked;
-
-
-            if (
-                node.data
-                    .catchEnabled
-            ) {
-
-                const catchNext =
-                    propertyCatchNext
-                        .value;
-
-
-                if (!catchNext) {
-
-                    showMessage(
-                        'Selecciona un estado de destino para Catch.',
-                        'danger'
-                    );
-
-                    return;
-                }
-
-
-                if (
-                    catchNext ===
-                    newName
-                ) {
-
-                    showMessage(
-                        'Catch no puede apuntar al mismo Task.',
-                        'danger'
-                    );
-
-                    return;
-                }
-
-
-                node.data.catchNext =
-                    catchNext;
-
-            } else {
-
-                node.data.catchNext =
-                    '';
-            }
-        }
-
-
-        // =====================================================
-        // WAIT
-        // =====================================================
-
-        if (
-            node.data.type ===
-            'Wait'
-        ) {
-
-            const seconds =
+            const maxAttempts =
                 Number(
-                    propertySeconds
+                    propertyRetryMaxAttempts
                         .value
                 );
 
 
+            const intervalSeconds =
+                Number(
+                    propertyRetryInterval
+                        .value
+                );
+
+
+            const backoffRate =
+                Number(
+                    propertyRetryBackoff
+                        .value
+                );
+
+
+            // ---------------------------------------------
+            // MAX ATTEMPTS
+            // ---------------------------------------------
+
             if (
-                !Number.isFinite(
-                    seconds
+                !Number.isInteger(
+                    maxAttempts
                 ) ||
-                seconds < 0
+                maxAttempts < 0
             ) {
 
                 showMessage(
-                    'Seconds debe ser mayor o igual a 0.',
+                    'MaxAttempts debe ser un entero mayor o igual a 0.',
                     'danger'
                 );
 
@@ -1563,165 +1546,419 @@
             }
 
 
-            node.data.seconds =
-                seconds;
+            // ---------------------------------------------
+            // INTERVAL SECONDS
+            // ---------------------------------------------
+
+            if (
+                !Number.isFinite(
+                    intervalSeconds
+                ) ||
+                intervalSeconds < 0
+            ) {
+
+                showMessage(
+                    'IntervalSeconds debe ser un número mayor o igual a 0.',
+                    'danger'
+                );
+
+                return;
+            }
+
+
+            // ---------------------------------------------
+            // BACKOFF RATE
+            // ---------------------------------------------
+
+            if (
+                !Number.isFinite(
+                    backoffRate
+                ) ||
+                backoffRate < 1
+            ) {
+
+                showMessage(
+                    'BackoffRate debe ser un número mayor o igual a 1.',
+                    'danger'
+                );
+
+                return;
+            }
+
+
+            // Todos los datos son válidos.
+            // Ahora sí los guardamos en la copia.
+
+            updatedData.retryMaxAttempts =
+                maxAttempts;
+
+
+            updatedData.retryIntervalSeconds =
+                intervalSeconds;
+
+
+            updatedData.retryBackoffRate =
+                backoffRate;
         }
 
 
-        // =====================================================
-        // CHOICE
-        // =====================================================
+        // =================================================
+        // CATCH
+        // =================================================
+
+        updatedData.catchEnabled =
+            propertyCatchEnabled
+                .checked;
+
 
         if (
-            node.data.type ===
-            'Choice'
+            updatedData.catchEnabled
         ) {
 
-            node.data.variable =
-                propertyChoiceVariable
-                    .value
-                    .trim();
-
-
-            if (
-                !node.data
-                    .variable
-            ) {
-
-                showMessage(
-                    'Choice necesita una variable.',
-                    'danger'
-                );
-
-                return;
-            }
-
-
-            node.data.operator =
-                propertyChoiceOperator
+            const catchNext =
+                propertyCatchNext
                     .value;
 
 
-            let value =
-                propertyChoiceValue
-                    .value
-                    .trim();
+            if (!catchNext) {
 
+                showMessage(
+                    'Selecciona un estado de destino para Catch.',
+                    'danger'
+                );
 
-            if (
-                node.data.operator ===
-                'BooleanEquals'
-            ) {
-
-                if (
-                    value !==
-                    'true' &&
-                    value !==
-                    'false'
-                ) {
-
-                    showMessage(
-                        'BooleanEquals acepta true o false.',
-                        'danger'
-                    );
-
-                    return;
-                }
-
-
-                value =
-                    value ===
-                    'true';
+                return;
             }
 
 
-            if (
-                node.data.operator
-                    .startsWith(
-                        'Numeric'
+            // -------------------------------------------------
+            // VALIDAR QUE EL DESTINO EXISTA
+            // -------------------------------------------------
+
+            const targetExists =
+                Object
+                    .values(
+                        getNodes()
                     )
-            ) {
+                    .some(
+                        candidate => {
 
-                const numeric =
-                    Number(value);
-
-
-                if (
-                    !Number.isFinite(
-                        numeric
-                    )
-                ) {
-
-                    showMessage(
-                        'La comparación numérica necesita un número.',
-                        'danger'
+                            return (
+                                candidate.data
+                                    .stateName ===
+                                catchNext
+                            );
+                        }
                     );
 
-                    return;
-                }
 
+            if (!targetExists) {
 
-                value =
-                    numeric;
+                showMessage(
+                    `El estado de destino Catch "${catchNext}" no existe.`,
+                    'danger'
+                );
+
+                return;
             }
 
 
-            node.data.value =
-                value;
+            // -------------------------------------------------
+            // EVITAR CATCH AL MISMO TASK
+            // -------------------------------------------------
+
+            if (
+                catchNext ===
+                    oldName ||
+                catchNext ===
+                    newName
+            ) {
+
+                showMessage(
+                    'Catch no puede apuntar al mismo Task.',
+                    'danger'
+                );
+
+                return;
+            }
+
+
+            updatedData.catchNext =
+                catchNext;
+
+        } else {
+
+            updatedData.catchNext =
+                '';
         }
+    }
 
 
-        // =====================================================
-        // FAIL
-        // =====================================================
+    // =====================================================
+    // WAIT
+    // =====================================================
 
-        if (
-            node.data.type ===
-            'Fail'
-        ) {
+    if (
+        node.data.type ===
+        'Wait'
+    ) {
 
-            node.data.error =
-                propertyError
-                    .value
-                    .trim() ||
-                'WorkflowFailed';
-
-
-            node.data.cause =
-                propertyCause
-                    .value
-                    .trim() ||
-                'El workflow terminó con error.';
-        }
-
-
-        // =====================================================
-        // ACTUALIZAR DRAWFLOW
-        // =====================================================
-
-        editor
-            .updateNodeDataFromId(
-                selectedNodeId,
-                node.data
+        const seconds =
+            Number(
+                propertySeconds.value
             );
 
 
-        updateNodeHtml(
+        if (
+            !Number.isFinite(
+                seconds
+            ) ||
+            seconds < 0
+        ) {
+
+            showMessage(
+                'Seconds debe ser mayor o igual a 0.',
+                'danger'
+            );
+
+            return;
+        }
+
+
+        updatedData.seconds =
+            seconds;
+    }
+
+
+    // =====================================================
+    // CHOICE
+    // =====================================================
+
+    if (
+        node.data.type ===
+        'Choice'
+    ) {
+
+        const variable =
+            propertyChoiceVariable
+                .value
+                .trim();
+
+
+        if (!variable) {
+
+            showMessage(
+                'Choice necesita una variable.',
+                'danger'
+            );
+
+            return;
+        }
+
+
+        const operator =
+            propertyChoiceOperator
+                .value;
+
+
+        let value =
+            propertyChoiceValue
+                .value
+                .trim();
+
+
+        // -------------------------------------------------
+        // BOOLEAN
+        // -------------------------------------------------
+
+        if (
+            operator ===
+            'BooleanEquals'
+        ) {
+
+            if (
+                value !== 'true' &&
+                value !== 'false'
+            ) {
+
+                showMessage(
+                    'BooleanEquals acepta true o false.',
+                    'danger'
+                );
+
+                return;
+            }
+
+
+            value =
+                value ===
+                'true';
+        }
+
+
+        // -------------------------------------------------
+        // NUMERIC
+        // -------------------------------------------------
+
+        if (
+            operator.startsWith(
+                'Numeric'
+            )
+        ) {
+
+            const numericValue =
+                Number(value);
+
+
+            if (
+                !Number.isFinite(
+                    numericValue
+                )
+            ) {
+
+                showMessage(
+                    'La comparación numérica necesita un número.',
+                    'danger'
+                );
+
+                return;
+            }
+
+
+            value =
+                numericValue;
+        }
+
+
+        updatedData.variable =
+            variable;
+
+
+        updatedData.operator =
+            operator;
+
+
+        updatedData.value =
+            value;
+    }
+
+
+    // =====================================================
+    // FAIL
+    // =====================================================
+
+    if (
+        node.data.type ===
+        'Fail'
+    ) {
+
+        updatedData.error =
+            propertyError
+                .value
+                .trim() ||
+            'WorkflowFailed';
+
+
+        updatedData.cause =
+            propertyCause
+                .value
+                .trim() ||
+            'El workflow terminó con error.';
+    }
+
+
+    // =====================================================
+    // TODAS LAS VALIDACIONES PASARON
+    //
+    // A partir de aquí SÍ modificamos Drawflow.
+    // =====================================================
+
+    editor
+        .updateNodeDataFromId(
             selectedNodeId,
-            node
+            updatedData
         );
 
 
-        updateStartStateStyles();
+    // =====================================================
+    // ACTUALIZAR REFERENCIAS CATCH
+    // =====================================================
 
-        updateJsonPreview();
+    if (
+        oldName !==
+        newName
+    ) {
 
-
-        showMessage(
-            `Estado "${newName}" actualizado.`,
-            'success'
+        updateCatchReferences(
+            oldName,
+            newName
         );
     }
+
+
+    // =====================================================
+    // START AT
+    // =====================================================
+
+    if (
+        propertyStartAt.checked
+    ) {
+
+        startNodeId =
+            String(
+                selectedNodeId
+            );
+    }
+
+
+    // =====================================================
+    // ACTUALIZAR HTML DEL NODO
+    // =====================================================
+
+    const updatedNode =
+        editor.getNodeFromId(
+            selectedNodeId
+        );
+
+
+    if (updatedNode) {
+
+        updateNodeHtml(
+            selectedNodeId,
+            updatedNode
+        );
+    }
+
+
+    // =====================================================
+    // ACTUALIZAR INTERFAZ
+    // =====================================================
+
+    updateStartStateStyles();
+
+    updateJsonPreview();
+
+
+    // Actualizar selector Catch por si cambió algún nombre
+    if (
+        updatedNode &&
+        updatedNode.data.type ===
+        'Task'
+    ) {
+
+        populateCatchTargets(
+            updatedNode.data
+                .catchNext ||
+            ''
+        );
+    }
+
+
+    showMessage(
+        `Estado "${newName}" actualizado.`,
+        'success'
+    );
+}
 
 
     // =========================================================
