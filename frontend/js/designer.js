@@ -195,13 +195,15 @@
                 return {
                     inputs: 1,
                     outputs: 1,
+
                     data: {
                         stateName: `Task${nodeCounter}`,
                         type: 'Task',
-                        resource: 'task:nueva_tarea'
+
+                        // Resource válido por defecto
+                        resource: 'task:validar_pedido'
                     }
                 };
-
 
             case 'Choice':
 
@@ -1559,13 +1561,35 @@
 
                     if (
                         state.Type ===
-                        'Task' &&
-                        !state.Resource
+                        'Task'
                     ) {
 
-                        errors.push(
-                            `${name}: Task necesita Resource.`
-                        );
+                        const validResources = [
+                            'task:verificar_stock',
+                            'task:demo_procesar_pago',
+                            'task:generar_factura',
+                            'task:enviar_correo',
+                            'task:validar_pedido',
+                            'task:procesar_pago'
+                        ];
+
+
+                        if (!state.Resource) {
+
+                            errors.push(
+                                `${name}: Task necesita Resource.`
+                            );
+
+                        } else if (
+                            !validResources.includes(
+                                state.Resource
+                            )
+                        ) {
+
+                            errors.push(
+                                `${name}: Resource no registrado: ${state.Resource}.`
+                            );
+                        }
                     }
 
 
@@ -1598,15 +1622,13 @@
 
 
                     if (
-                        state.Type ===
-                        'Parallel' &&
-                        state.Branches
-                            .length === 0
+                        state.Type === 'Parallel' &&
+                        state.Branches.length === 0
                     ) {
 
-                        // Todavía no bloqueamos.
-                        // Parallel se completará
-                        // en una fase posterior.
+                        errors.push(
+                            `${name}: Parallel todavía no puede configurarse desde el diseñador visual.`
+                        );
                     }
                 }
             );

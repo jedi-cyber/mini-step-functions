@@ -503,12 +503,38 @@ page_start('Diseñador de Workflow');
                             Resource
                         </label>
 
-                        <input
-                            type="text"
-                            class="form-control font-monospace"
+                        <select
+                            class="form-select font-monospace"
                             id="property-resource"
-                            placeholder="task:validar_pedido"
                         >
+                            <option value="task:verificar_stock">
+                                task:verificar_stock
+                            </option>
+
+                            <option value="task:demo_procesar_pago">
+                                task:demo_procesar_pago
+                            </option>
+
+                            <option value="task:generar_factura">
+                                task:generar_factura
+                            </option>
+
+                            <option value="task:enviar_correo">
+                                task:enviar_correo
+                            </option>
+
+                            <option value="task:validar_pedido">
+                                task:validar_pedido
+                            </option>
+
+                            <option value="task:procesar_pago">
+                                task:procesar_pago
+                            </option>
+                        </select>
+
+                        <div class="form-text">
+                            Selecciona una tarea registrada en el backend.
+                        </div>
 
                     </div>
 
