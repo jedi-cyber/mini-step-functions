@@ -6,7 +6,9 @@ from app.main import app
 from app.database.connection import engine, get_db
 from app.api.dependencies import execution_service
 from app.services.execution_service import ExecutionService
+from app.models import Execution
 
+from sqlalchemy import (select, func)
 
 class ApiTest(unittest.TestCase):
     def test_validation_list_on_create_update_and_execute(self):
@@ -104,6 +106,76 @@ class ApiTest(unittest.TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertIn("/api/workflows/{id}/execute", response.json()["paths"])
 
+    def test_inactive_workflow_cannot_execute(self):
+        from app.models import Execution
+        from sqlalchemy import select, func
+
+        body = {
+            "name": "Workflow inactivo",
+            "description": "No debe poder ejecutarse.",
+            "definition": {
+                "StartAt": "Inicio",
+                "States": {
+                    "Inicio": {
+                        "Type": "Pass",
+                        "Next": "Fin"
+                    },
+                    "Fin": {
+                        "Type": "Succeed"
+                    }
+                }
+            },
+            "is_active": False
+        }
+
+        workflow_id = self.create(body)
+
+        workflow_response = self.client.get(
+            f"/api/workflows/{workflow_id}"
+        )
+
+        self.assertEqual(
+            workflow_response.status_code,
+            200
+        )
+
+        self.assertFalse(
+            workflow_response.json()["is_active"]
+        )
+
+        response = self.client.post(
+            f"/api/workflows/{workflow_id}/execute",
+            json={
+                "input": {}
+            }
+        )
+
+        self.assertEqual(
+            response.status_code,
+            409,
+            response.text
+        )
+
+        self.assertIn(
+            "inactivo",
+            response.json()["detail"].lower()
+        )
+
+        # Ninguna ejecución debe haberse creado.
+        with self.sessions() as db:
+            total = db.scalar(
+                select(func.count())
+                .select_from(Execution)
+                .where(
+                    Execution.workflow_id ==
+                    workflow_id
+                )
+            )
+
+        self.assertEqual(
+            total,
+            0
+        )
 
 if __name__ == "__main__":
     unittest.main(verbosity=2)
