@@ -36,7 +36,7 @@
 
 
     // =========================================================
-    // PROPIEDADES
+    // PROPIEDADES GENERALES
     // =========================================================
 
     const propertyStateName =
@@ -48,29 +48,111 @@
     const propertyStartAt =
         document.getElementById('property-start-at');
 
+    const propertyNextContainer =
+        document.getElementById('property-next-container');
+
+
+    // =========================================================
+    // TASK
+    // =========================================================
+
     const propertyResource =
         document.getElementById('property-resource');
 
+
+    // =========================================================
+    // RETRY
+    // =========================================================
+
+    const propertyRetryEnabled =
+        document.getElementById(
+            'property-retry-enabled'
+        );
+
+    const retryProperties =
+        document.getElementById(
+            'retry-properties'
+        );
+
+    const propertyRetryMaxAttempts =
+        document.getElementById(
+            'property-retry-max-attempts'
+        );
+
+    const propertyRetryInterval =
+        document.getElementById(
+            'property-retry-interval'
+        );
+
+    const propertyRetryBackoff =
+        document.getElementById(
+            'property-retry-backoff'
+        );
+
+
+    // =========================================================
+    // CATCH
+    // =========================================================
+
+    const propertyCatchEnabled =
+        document.getElementById(
+            'property-catch-enabled'
+        );
+
+    const catchProperties =
+        document.getElementById(
+            'catch-properties'
+        );
+
+    const propertyCatchNext =
+        document.getElementById(
+            'property-catch-next'
+        );
+
+
+    // =========================================================
+    // WAIT
+    // =========================================================
+
     const propertySeconds =
-        document.getElementById('property-seconds');
+        document.getElementById(
+            'property-seconds'
+        );
+
+
+    // =========================================================
+    // CHOICE
+    // =========================================================
 
     const propertyChoiceVariable =
-        document.getElementById('property-choice-variable');
+        document.getElementById(
+            'property-choice-variable'
+        );
 
     const propertyChoiceOperator =
-        document.getElementById('property-choice-operator');
+        document.getElementById(
+            'property-choice-operator'
+        );
 
     const propertyChoiceValue =
-        document.getElementById('property-choice-value');
+        document.getElementById(
+            'property-choice-value'
+        );
+
+
+    // =========================================================
+    // FAIL
+    // =========================================================
 
     const propertyError =
-        document.getElementById('property-error');
+        document.getElementById(
+            'property-error'
+        );
 
     const propertyCause =
-        document.getElementById('property-cause');
-
-    const propertyNextContainer =
-        document.getElementById('property-next-container');
+        document.getElementById(
+            'property-cause'
+        );
 
 
     // =========================================================
@@ -85,10 +167,25 @@
 
 
     // =========================================================
-    // INICIAR DRAWFLOW
+    // RESOURCES VÁLIDOS
+    // =========================================================
+
+    const VALID_RESOURCES = [
+        'task:verificar_stock',
+        'task:demo_procesar_pago',
+        'task:generar_factura',
+        'task:enviar_correo',
+        'task:validar_pedido',
+        'task:procesar_pago'
+    ];
+
+
+    // =========================================================
+    // DRAWFLOW
     // =========================================================
 
     if (typeof Drawflow === 'undefined') {
+
         showMessage(
             'No se pudo cargar Drawflow.',
             'danger'
@@ -97,45 +194,26 @@
         return;
     }
 
-    const editor = new Drawflow(canvas);
+
+    const editor =
+        new Drawflow(canvas);
+
 
     editor.reroute = true;
 
     editor.curvature = 0.45;
 
-    editor.reroute_curvature_start_end = 0.5;
+    editor.reroute_curvature_start_end =
+        0.5;
 
-    editor.force_first_input = false;
+    editor.force_first_input =
+        false;
 
     editor.start();
 
 
     // =========================================================
-    // EVITAR EL MENSAJE VACÍO SOBRE DRAWFLOW
-    // =========================================================
-
-    function updateCanvasStatus() {
-
-        const data = getNodes();
-
-        const total =
-            Object.keys(data).length;
-
-        canvasStatus.textContent =
-            `${total} ${total === 1 ? 'estado' : 'estados'}`;
-
-        if (emptyMessage) {
-            if (total === 0) {
-                emptyMessage.classList.remove('d-none');
-            } else {
-                emptyMessage.classList.add('d-none');
-            }
-        }
-    }
-
-
-    // =========================================================
-    // OBTENER NODOS
+    // UTILIDADES
     // =========================================================
 
     function getNodes() {
@@ -147,79 +225,164 @@
             exported
                 ?.drawflow
                 ?.Home
-                ?.data || {}
+                ?.data ||
+            {}
         );
     }
 
-
-    // =========================================================
-    // MENSAJES
-    // =========================================================
 
     function showMessage(
         message,
         type = 'info'
     ) {
 
-        designerMessage.innerHTML = '';
+        designerMessage.innerHTML =
+            '';
 
         const alert =
-            document.createElement('div');
+            document.createElement(
+                'div'
+            );
 
         alert.className =
             `alert alert-${type}`;
 
-        alert.style.whiteSpace = 'pre-line';
+        alert.style.whiteSpace =
+            'pre-line';
 
-        alert.textContent = message;
+        alert.textContent =
+            message;
 
-        designerMessage.appendChild(alert);
+        designerMessage
+            .appendChild(
+                alert
+            );
     }
 
 
     function clearMessage() {
-        designerMessage.innerHTML = '';
+
+        designerMessage.innerHTML =
+            '';
+    }
+
+
+    function escapeHtml(value) {
+
+        const div =
+            document.createElement(
+                'div'
+            );
+
+        div.textContent =
+            value ?? '';
+
+        return div.innerHTML;
+    }
+
+
+    function updateCanvasStatus() {
+
+        const nodes =
+            getNodes();
+
+        const total =
+            Object.keys(nodes).length;
+
+        canvasStatus.textContent =
+            `${total} ${
+                total === 1
+                    ? 'estado'
+                    : 'estados'
+            }`;
+
+
+        if (!emptyMessage) {
+            return;
+        }
+
+
+        emptyMessage.classList.toggle(
+            'd-none',
+            total > 0
+        );
     }
 
 
     // =========================================================
-    // CONFIGURACIÓN POR TIPO DE ESTADO
+    // CONFIGURACIÓN DE ESTADOS
     // =========================================================
 
-    function getStateConfiguration(type) {
+    function getStateConfiguration(
+        type
+    ) {
 
         switch (type) {
 
             case 'Task':
 
                 return {
+
                     inputs: 1,
+
                     outputs: 1,
 
                     data: {
-                        stateName: `Task${nodeCounter}`,
-                        type: 'Task',
 
-                        // Resource válido por defecto
-                        resource: 'task:validar_pedido'
+                        stateName:
+                            `Task${nodeCounter}`,
+
+                        type:
+                            'Task',
+
+                        resource:
+                            'task:validar_pedido',
+
+                        retryEnabled:
+                            false,
+
+                        retryMaxAttempts:
+                            3,
+
+                        retryIntervalSeconds:
+                            1,
+
+                        retryBackoffRate:
+                            2,
+
+                        catchEnabled:
+                            false,
+
+                        catchNext:
+                            ''
                     }
                 };
+
 
             case 'Choice':
 
                 return {
+
                     inputs: 1,
 
-                    // output_1 = condición verdadera
-                    // output_2 = Default
                     outputs: 2,
 
                     data: {
-                        stateName: `Choice${nodeCounter}`,
-                        type: 'Choice',
-                        variable: '$.valor',
-                        operator: 'BooleanEquals',
-                        value: true
+
+                        stateName:
+                            `Choice${nodeCounter}`,
+
+                        type:
+                            'Choice',
+
+                        variable:
+                            '$.valor',
+
+                        operator:
+                            'BooleanEquals',
+
+                        value:
+                            true
                     }
                 };
 
@@ -227,13 +390,21 @@
             case 'Wait':
 
                 return {
+
                     inputs: 1,
+
                     outputs: 1,
 
                     data: {
-                        stateName: `Wait${nodeCounter}`,
-                        type: 'Wait',
-                        seconds: 1
+
+                        stateName:
+                            `Wait${nodeCounter}`,
+
+                        type:
+                            'Wait',
+
+                        seconds:
+                            1
                     }
                 };
 
@@ -241,12 +412,18 @@
             case 'Pass':
 
                 return {
+
                     inputs: 1,
+
                     outputs: 1,
 
                     data: {
-                        stateName: `Pass${nodeCounter}`,
-                        type: 'Pass'
+
+                        stateName:
+                            `Pass${nodeCounter}`,
+
+                        type:
+                            'Pass'
                     }
                 };
 
@@ -254,12 +431,18 @@
             case 'Parallel':
 
                 return {
+
                     inputs: 1,
+
                     outputs: 1,
 
                     data: {
-                        stateName: `Parallel${nodeCounter}`,
-                        type: 'Parallel'
+
+                        stateName:
+                            `Parallel${nodeCounter}`,
+
+                        type:
+                            'Parallel'
                     }
                 };
 
@@ -267,12 +450,18 @@
             case 'Succeed':
 
                 return {
+
                     inputs: 1,
+
                     outputs: 0,
 
                     data: {
-                        stateName: `Succeed${nodeCounter}`,
-                        type: 'Succeed'
+
+                        stateName:
+                            `Succeed${nodeCounter}`,
+
+                        type:
+                            'Succeed'
                     }
                 };
 
@@ -280,13 +469,22 @@
             case 'Fail':
 
                 return {
+
                     inputs: 1,
+
                     outputs: 0,
 
                     data: {
-                        stateName: `Fail${nodeCounter}`,
-                        type: 'Fail',
-                        error: 'WorkflowFailed',
+
+                        stateName:
+                            `Fail${nodeCounter}`,
+
+                        type:
+                            'Fail',
+
+                        error:
+                            'WorkflowFailed',
+
                         cause:
                             'El workflow terminó con error.'
                     }
@@ -312,30 +510,50 @@
     ) {
 
         const icons = {
+
             Task: '⚙',
+
             Choice: '◇',
+
             Wait: '◷',
+
             Pass: '○',
+
             Parallel: '⇉',
+
             Succeed: '✓',
+
             Fail: '✕'
         };
 
 
-        let outputs = '';
+        let extra = '';
 
-        if (type === 'Choice') {
 
-            outputs = `
+        if (
+            type ===
+            'Choice'
+        ) {
+
+            extra = `
+
                 <div class="choice-labels">
-                    <span>Sí</span>
-                    <span>Default</span>
+
+                    <span>
+                        Sí
+                    </span>
+
+                    <span>
+                        Default
+                    </span>
+
                 </div>
             `;
         }
 
 
         return `
+
             <div class="step-node-content">
 
                 <div class="step-node-header">
@@ -350,11 +568,13 @@
 
                 </div>
 
+
                 <div class="step-node-name">
                     ${escapeHtml(name)}
                 </div>
 
-                ${outputs}
+
+                ${extra}
 
             </div>
         `;
@@ -374,22 +594,31 @@
         const configuration =
             getStateConfiguration(type);
 
-        const name =
-            configuration.data.stateName;
 
         const html =
-            getNodeHtml(type, name);
+            getNodeHtml(
+                type,
+                configuration.data.stateName
+            );
 
 
         const nodeId =
             editor.addNode(
+
                 type,
+
                 configuration.inputs,
+
                 configuration.outputs,
+
                 x,
+
                 y,
+
                 `state-${type.toLowerCase()}`,
+
                 configuration.data,
+
                 html
             );
 
@@ -397,8 +626,11 @@
         nodeCounter++;
 
 
-        // Primer estado = StartAt
-        if (startNodeId === null) {
+        // Primer nodo = StartAt
+        if (
+            startNodeId === null
+        ) {
+
             startNodeId =
                 String(nodeId);
         }
@@ -412,67 +644,73 @@
 
 
         showMessage(
-            `Estado "${name}" agregado.`,
+            `Estado "${configuration.data.stateName}" agregado.`,
             'success'
         );
     }
 
 
     // =========================================================
-    // CLICK EN LOS BOTONES
+    // BOTONES DEL PANEL IZQUIERDO
     // =========================================================
 
     document
         .querySelectorAll(
             '[data-state-type]'
         )
-        .forEach(button => {
+        .forEach(
+            button => {
 
-            button.addEventListener(
-                'click',
-                () => {
+                button.addEventListener(
+                    'click',
+                    () => {
 
-                    const type =
-                        button.dataset.stateType;
-
-
-                    const total =
-                        Object.keys(
-                            getNodes()
-                        ).length;
+                        const type =
+                            button.dataset
+                                .stateType;
 
 
-                    addNode(
-                        type,
-                        250,
-                        50 + (total * 120)
-                    );
-                }
-            );
+                        const total =
+                            Object.keys(
+                                getNodes()
+                            ).length;
 
 
-            // =================================================
-            // DRAG
-            // =================================================
+                        addNode(
+                            type,
+                            250,
+                            50 +
+                            total * 120
+                        );
+                    }
+                );
 
-            button.addEventListener(
-                'dragstart',
-                event => {
 
-                    event.dataTransfer.setData(
-                        'state-type',
-                        button.dataset.stateType
-                    );
+                button.addEventListener(
+                    'dragstart',
+                    event => {
 
-                    event.dataTransfer.effectAllowed =
-                        'copy';
-                }
-            );
-        });
+                        event
+                            .dataTransfer
+                            .setData(
+                                'state-type',
+                                button.dataset
+                                    .stateType
+                            );
+
+
+                        event
+                            .dataTransfer
+                            .effectAllowed =
+                            'copy';
+                    }
+                );
+            }
+        );
 
 
     // =========================================================
-    // DROP SOBRE CANVAS
+    // DRAG & DROP
     // =========================================================
 
     canvas.addEventListener(
@@ -481,7 +719,8 @@
 
             event.preventDefault();
 
-            event.dataTransfer.dropEffect =
+            event.dataTransfer
+                .dropEffect =
                 'copy';
         }
     );
@@ -493,10 +732,12 @@
 
             event.preventDefault();
 
+
             const type =
-                event.dataTransfer.getData(
-                    'state-type'
-                );
+                event.dataTransfer
+                    .getData(
+                        'state-type'
+                    );
 
 
             if (!type) {
@@ -505,7 +746,8 @@
 
 
             const rect =
-                canvas.getBoundingClientRect();
+                canvas
+                    .getBoundingClientRect();
 
 
             const zoom =
@@ -517,7 +759,8 @@
                     event.clientX -
                     rect.left -
                     editor.canvas_x
-                ) / zoom;
+                ) /
+                zoom;
 
 
             const y =
@@ -525,7 +768,8 @@
                     event.clientY -
                     rect.top -
                     editor.canvas_y
-                ) / zoom;
+                ) /
+                zoom;
 
 
             addNode(
@@ -538,7 +782,7 @@
 
 
     // =========================================================
-    // SELECCIÓN DRAWFLOW
+    // EVENTOS DRAWFLOW
     // =========================================================
 
     editor.on(
@@ -554,17 +798,203 @@
         'nodeUnselected',
         () => {
 
-            selectedNodeId = null;
+            selectedNodeId =
+                null;
 
-            propertiesForm.classList.add(
-                'd-none'
-            );
 
-            propertiesEmpty.classList.remove(
-                'd-none'
-            );
+            propertiesForm
+                .classList
+                .add(
+                    'd-none'
+                );
+
+
+            propertiesEmpty
+                .classList
+                .remove(
+                    'd-none'
+                );
         }
     );
+
+
+    editor.on(
+        'connectionCreated',
+        () => {
+
+            updateJsonPreview();
+        }
+    );
+
+
+    editor.on(
+        'connectionRemoved',
+        () => {
+
+            updateJsonPreview();
+        }
+    );
+
+
+    editor.on(
+        'nodeMoved',
+        () => {
+
+            updateJsonPreview();
+        }
+    );
+
+
+    editor.on(
+        'nodeRemoved',
+        () => {
+
+            updateCanvasStatus();
+
+            updateJsonPreview();
+        }
+    );
+
+
+    // =========================================================
+    // MOSTRAR / OCULTAR RETRY
+    // =========================================================
+
+    propertyRetryEnabled
+        .addEventListener(
+            'change',
+            () => {
+
+                retryProperties
+                    .classList
+                    .toggle(
+                        'd-none',
+                        !propertyRetryEnabled
+                            .checked
+                    );
+            }
+        );
+
+
+    // =========================================================
+    // MOSTRAR / OCULTAR CATCH
+    // =========================================================
+
+    propertyCatchEnabled
+        .addEventListener(
+            'change',
+            () => {
+
+                catchProperties
+                    .classList
+                    .toggle(
+                        'd-none',
+                        !propertyCatchEnabled
+                            .checked
+                    );
+
+
+                if (
+                    propertyCatchEnabled
+                        .checked
+                ) {
+
+                    populateCatchTargets(
+                        propertyCatchNext
+                            .value
+                    );
+                }
+            }
+        );
+
+
+    // =========================================================
+    // OCULTAR PROPIEDADES ESPECÍFICAS
+    // =========================================================
+
+    function hideSpecificProperties() {
+
+        document
+            .querySelectorAll(
+                '.state-properties'
+            )
+            .forEach(
+                element => {
+
+                    element
+                        .classList
+                        .add(
+                            'd-none'
+                        );
+                }
+            );
+    }
+
+
+    // =========================================================
+    // DESTINOS DE CATCH
+    // =========================================================
+
+    function populateCatchTargets(
+        selectedValue = ''
+    ) {
+
+        propertyCatchNext
+            .innerHTML =
+            '<option value="">Selecciona un estado</option>';
+
+
+        Object
+            .entries(
+                getNodes()
+            )
+            .forEach(
+                ([id, node]) => {
+
+                    // No permitir que Catch apunte
+                    // al mismo Task.
+                    if (
+                        String(id) ===
+                        String(
+                            selectedNodeId
+                        )
+                    ) {
+                        return;
+                    }
+
+
+                    const option =
+                        document.createElement(
+                            'option'
+                        );
+
+
+                    option.value =
+                        node.data
+                            .stateName;
+
+
+                    option.textContent =
+                        `${node.data.stateName} (${node.data.type})`;
+
+
+                    if (
+                        node.data.stateName ===
+                        selectedValue
+                    ) {
+
+                        option.selected =
+                            true;
+                    }
+
+
+                    propertyCatchNext
+                        .appendChild(
+                            option
+                        );
+                }
+            );
+    }
 
 
     // =========================================================
@@ -578,7 +1008,8 @@
 
 
         const node =
-            editor.getNodeFromId(id);
+            editor
+                .getNodeFromId(id);
 
 
         if (!node) {
@@ -586,141 +1017,243 @@
         }
 
 
-        propertiesEmpty.classList.add(
-            'd-none'
-        );
+        propertiesEmpty
+            .classList
+            .add(
+                'd-none'
+            );
 
-        propertiesForm.classList.remove(
-            'd-none'
-        );
+
+        propertiesForm
+            .classList
+            .remove(
+                'd-none'
+            );
 
 
         hideSpecificProperties();
 
 
         propertyStateName.value =
-            node.data.stateName || '';
+            node.data
+                .stateName || '';
+
 
         propertyStateType.value =
-            node.data.type || '';
+            node.data
+                .type || '';
+
 
         propertyStartAt.checked =
             String(startNodeId) ===
             String(id);
 
 
-        // -----------------------------------------------------
+        // =====================================================
         // TASK
-        // -----------------------------------------------------
+        // =====================================================
 
-        if (node.data.type === 'Task') {
+        if (
+            node.data.type ===
+            'Task'
+        ) {
 
             document
                 .getElementById(
                     'properties-task'
                 )
-                .classList.remove('d-none');
+                .classList
+                .remove(
+                    'd-none'
+                );
 
 
             propertyResource.value =
-                node.data.resource || '';
+                node.data.resource ||
+                'task:validar_pedido';
+
+
+            // -------------------------------------------------
+            // RETRY
+            // -------------------------------------------------
+
+            propertyRetryEnabled
+                .checked =
+                node.data
+                    .retryEnabled ===
+                true;
+
+
+            propertyRetryMaxAttempts
+                .value =
+                node.data
+                    .retryMaxAttempts ??
+                3;
+
+
+            propertyRetryInterval
+                .value =
+                node.data
+                    .retryIntervalSeconds ??
+                1;
+
+
+            propertyRetryBackoff
+                .value =
+                node.data
+                    .retryBackoffRate ??
+                2;
+
+
+            retryProperties
+                .classList
+                .toggle(
+                    'd-none',
+                    !propertyRetryEnabled
+                        .checked
+                );
+
+
+            // -------------------------------------------------
+            // CATCH
+            // -------------------------------------------------
+
+            propertyCatchEnabled
+                .checked =
+                node.data
+                    .catchEnabled ===
+                true;
+
+
+            populateCatchTargets(
+                node.data
+                    .catchNext ||
+                ''
+            );
+
+
+            catchProperties
+                .classList
+                .toggle(
+                    'd-none',
+                    !propertyCatchEnabled
+                        .checked
+                );
         }
 
 
-        // -----------------------------------------------------
+        // =====================================================
         // WAIT
-        // -----------------------------------------------------
+        // =====================================================
 
-        if (node.data.type === 'Wait') {
+        if (
+            node.data.type ===
+            'Wait'
+        ) {
 
             document
                 .getElementById(
                     'properties-wait'
                 )
-                .classList.remove('d-none');
+                .classList
+                .remove(
+                    'd-none'
+                );
 
 
             propertySeconds.value =
-                node.data.seconds ?? 1;
+                node.data
+                    .seconds ??
+                1;
         }
 
 
-        // -----------------------------------------------------
+        // =====================================================
         // CHOICE
-        // -----------------------------------------------------
+        // =====================================================
 
-        if (node.data.type === 'Choice') {
+        if (
+            node.data.type ===
+            'Choice'
+        ) {
 
             document
                 .getElementById(
                     'properties-choice'
                 )
-                .classList.remove('d-none');
+                .classList
+                .remove(
+                    'd-none'
+                );
 
 
-            propertyChoiceVariable.value =
-                node.data.variable || '';
+            propertyChoiceVariable
+                .value =
+                node.data
+                    .variable ||
+                '$.valor';
 
-            propertyChoiceOperator.value =
-                node.data.operator ||
+
+            propertyChoiceOperator
+                .value =
+                node.data
+                    .operator ||
                 'BooleanEquals';
 
-            propertyChoiceValue.value =
+
+            propertyChoiceValue
+                .value =
                 String(
-                    node.data.value ?? true
+                    node.data
+                        .value ??
+                    true
                 );
         }
 
 
-        // -----------------------------------------------------
+        // =====================================================
         // FAIL
-        // -----------------------------------------------------
+        // =====================================================
 
-        if (node.data.type === 'Fail') {
+        if (
+            node.data.type ===
+            'Fail'
+        ) {
 
             document
                 .getElementById(
                     'properties-fail'
                 )
-                .classList.remove('d-none');
+                .classList
+                .remove(
+                    'd-none'
+                );
 
 
             propertyError.value =
-                node.data.error || '';
+                node.data
+                    .error ||
+                'WorkflowFailed';
+
 
             propertyCause.value =
-                node.data.cause || '';
+                node.data
+                    .cause ||
+                '';
         }
 
 
-        // -----------------------------------------------------
-        // Ya no necesitamos el selector Next
-        // porque las conexiones visuales lo generan.
-        // -----------------------------------------------------
-
-        propertyNextContainer.classList.add(
-            'd-none'
-        );
-    }
-
-
-    function hideSpecificProperties() {
-
-        document
-            .querySelectorAll(
-                '.state-properties'
-            )
-            .forEach(element => {
-
-                element.classList.add(
-                    'd-none'
-                );
-            });
+        // Next visual se obtiene mediante conexiones
+        propertyNextContainer
+            .classList
+            .add(
+                'd-none'
+            );
     }
 
 
     // =========================================================
-    // ACTUALIZAR NODO
+    // ACTUALIZAR ESTADO
     // =========================================================
 
     document
@@ -747,9 +1280,10 @@
 
 
         const node =
-            editor.getNodeFromId(
-                selectedNodeId
-            );
+            editor
+                .getNodeFromId(
+                    selectedNodeId
+                );
 
 
         if (!node) {
@@ -758,7 +1292,9 @@
 
 
         const newName =
-            propertyStateName.value.trim();
+            propertyStateName
+                .value
+                .trim();
 
 
         if (!newName) {
@@ -772,24 +1308,30 @@
         }
 
 
-        // -----------------------------------------------------
-        // Evitar nombres duplicados
-        // -----------------------------------------------------
+        // =====================================================
+        // EVITAR NOMBRES DUPLICADOS
+        // =====================================================
 
         const duplicated =
-            Object.entries(
-                getNodes()
-            )
-            .some(([id, candidate]) => {
+            Object
+                .entries(
+                    getNodes()
+                )
+                .some(
+                    ([id, candidate]) => {
 
-                return (
-                    String(id) !==
-                        String(selectedNodeId) &&
+                        return (
+                            String(id) !==
+                            String(
+                                selectedNodeId
+                            ) &&
 
-                    candidate.data.stateName ===
-                        newName
+                            candidate.data
+                                .stateName ===
+                            newName
+                        );
+                    }
                 );
-            });
 
 
         if (duplicated) {
@@ -807,42 +1349,208 @@
             newName;
 
 
-        // -----------------------------------------------------
-        // StartAt
-        // -----------------------------------------------------
+        // =====================================================
+        // START AT
+        // =====================================================
 
-        if (propertyStartAt.checked) {
+        if (
+            propertyStartAt
+                .checked
+        ) {
 
             startNodeId =
-                String(selectedNodeId);
+                String(
+                    selectedNodeId
+                );
         }
 
 
-        // -----------------------------------------------------
-        // Task
-        // -----------------------------------------------------
+        // =====================================================
+        // TASK
+        // =====================================================
 
-        if (node.data.type === 'Task') {
+        if (
+            node.data.type ===
+            'Task'
+        ) {
 
             node.data.resource =
-                propertyResource.value.trim();
+                propertyResource
+                    .value
+                    .trim();
+
+
+            // -------------------------------------------------
+            // RETRY
+            // -------------------------------------------------
+
+            node.data.retryEnabled =
+                propertyRetryEnabled
+                    .checked;
+
+
+            if (
+                node.data
+                    .retryEnabled
+            ) {
+
+                const maxAttempts =
+                    Number(
+                        propertyRetryMaxAttempts
+                            .value
+                    );
+
+
+                const intervalSeconds =
+                    Number(
+                        propertyRetryInterval
+                            .value
+                    );
+
+
+                const backoffRate =
+                    Number(
+                        propertyRetryBackoff
+                            .value
+                    );
+
+
+                if (
+                    !Number.isInteger(
+                        maxAttempts
+                    ) ||
+                    maxAttempts < 0
+                ) {
+
+                    showMessage(
+                        'MaxAttempts debe ser un entero mayor o igual a 0.',
+                        'danger'
+                    );
+
+                    return;
+                }
+
+
+                if (
+                    !Number.isFinite(
+                        intervalSeconds
+                    ) ||
+                    intervalSeconds < 0
+                ) {
+
+                    showMessage(
+                        'IntervalSeconds debe ser un número mayor o igual a 0.',
+                        'danger'
+                    );
+
+                    return;
+                }
+
+
+                if (
+                    !Number.isFinite(
+                        backoffRate
+                    ) ||
+                    backoffRate < 1
+                ) {
+
+                    showMessage(
+                        'BackoffRate debe ser un número mayor o igual a 1.',
+                        'danger'
+                    );
+
+                    return;
+                }
+
+
+                node.data.retryMaxAttempts =
+                    maxAttempts;
+
+
+                node.data.retryIntervalSeconds =
+                    intervalSeconds;
+
+
+                node.data.retryBackoffRate =
+                    backoffRate;
+            }
+
+
+            // -------------------------------------------------
+            // CATCH
+            // -------------------------------------------------
+
+            node.data.catchEnabled =
+                propertyCatchEnabled
+                    .checked;
+
+
+            if (
+                node.data
+                    .catchEnabled
+            ) {
+
+                const catchNext =
+                    propertyCatchNext
+                        .value;
+
+
+                if (!catchNext) {
+
+                    showMessage(
+                        'Selecciona un estado de destino para Catch.',
+                        'danger'
+                    );
+
+                    return;
+                }
+
+
+                if (
+                    catchNext ===
+                    newName
+                ) {
+
+                    showMessage(
+                        'Catch no puede apuntar al mismo Task.',
+                        'danger'
+                    );
+
+                    return;
+                }
+
+
+                node.data.catchNext =
+                    catchNext;
+
+            } else {
+
+                node.data.catchNext =
+                    '';
+            }
         }
 
 
-        // -----------------------------------------------------
-        // Wait
-        // -----------------------------------------------------
+        // =====================================================
+        // WAIT
+        // =====================================================
 
-        if (node.data.type === 'Wait') {
+        if (
+            node.data.type ===
+            'Wait'
+        ) {
 
             const seconds =
                 Number(
-                    propertySeconds.value
+                    propertySeconds
+                        .value
                 );
 
 
             if (
-                Number.isNaN(seconds) ||
+                !Number.isFinite(
+                    seconds
+                ) ||
                 seconds < 0
             ) {
 
@@ -860,11 +1568,14 @@
         }
 
 
-        // -----------------------------------------------------
-        // Choice
-        // -----------------------------------------------------
+        // =====================================================
+        // CHOICE
+        // =====================================================
 
-        if (node.data.type === 'Choice') {
+        if (
+            node.data.type ===
+            'Choice'
+        ) {
 
             node.data.variable =
                 propertyChoiceVariable
@@ -872,8 +1583,23 @@
                     .trim();
 
 
+            if (
+                !node.data
+                    .variable
+            ) {
+
+                showMessage(
+                    'Choice necesita una variable.',
+                    'danger'
+                );
+
+                return;
+            }
+
+
             node.data.operator =
-                propertyChoiceOperator.value;
+                propertyChoiceOperator
+                    .value;
 
 
             let value =
@@ -888,8 +1614,10 @@
             ) {
 
                 if (
-                    value !== 'true' &&
-                    value !== 'false'
+                    value !==
+                    'true' &&
+                    value !==
+                    'false'
                 ) {
 
                     showMessage(
@@ -902,13 +1630,16 @@
 
 
                 value =
-                    value === 'true';
+                    value ===
+                    'true';
             }
 
 
             if (
                 node.data.operator
-                    .startsWith('Numeric')
+                    .startsWith(
+                        'Numeric'
+                    )
             ) {
 
                 const numeric =
@@ -916,7 +1647,7 @@
 
 
                 if (
-                    Number.isNaN(
+                    !Number.isFinite(
                         numeric
                     )
                 ) {
@@ -940,28 +1671,39 @@
         }
 
 
-        // -----------------------------------------------------
-        // Fail
-        // -----------------------------------------------------
+        // =====================================================
+        // FAIL
+        // =====================================================
 
-        if (node.data.type === 'Fail') {
+        if (
+            node.data.type ===
+            'Fail'
+        ) {
 
             node.data.error =
-                propertyError.value.trim() ||
+                propertyError
+                    .value
+                    .trim() ||
                 'WorkflowFailed';
 
 
             node.data.cause =
-                propertyCause.value.trim() ||
+                propertyCause
+                    .value
+                    .trim() ||
                 'El workflow terminó con error.';
         }
 
 
-        // Actualizar datos dentro de Drawflow
-        editor.updateNodeDataFromId(
-            selectedNodeId,
-            node.data
-        );
+        // =====================================================
+        // ACTUALIZAR DRAWFLOW
+        // =====================================================
+
+        editor
+            .updateNodeDataFromId(
+                selectedNodeId,
+                node.data
+            );
 
 
         updateNodeHtml(
@@ -1020,12 +1762,15 @@
             .querySelectorAll(
                 '.drawflow-node'
             )
-            .forEach(node => {
+            .forEach(
+                node => {
 
-                node.classList.remove(
-                    'start-state-node'
-                );
-            });
+                    node.classList
+                        .remove(
+                            'start-state-node'
+                        );
+                }
+            );
 
 
         if (!startNodeId) {
@@ -1041,9 +1786,11 @@
 
         if (startNode) {
 
-            startNode.classList.add(
-                'start-state-node'
-            );
+            startNode
+                .classList
+                .add(
+                    'start-state-node'
+                );
         }
     }
 
@@ -1066,9 +1813,10 @@
 
 
                 const node =
-                    editor.getNodeFromId(
-                        selectedNodeId
-                    );
+                    editor
+                        .getNodeFromId(
+                            selectedNodeId
+                        );
 
 
                 if (!node) {
@@ -1085,13 +1833,53 @@
                 }
 
 
+                const deletedName =
+                    node.data.stateName;
+
+
                 const deletedId =
-                    String(selectedNodeId);
+                    String(
+                        selectedNodeId
+                    );
 
 
                 editor.removeNodeId(
                     `node-${selectedNodeId}`
                 );
+
+
+                // Limpiar Catch que apunte
+                // al nodo eliminado.
+                Object
+                    .values(
+                        getNodes()
+                    )
+                    .forEach(
+                        candidate => {
+
+                            if (
+                                candidate.data
+                                    .catchNext ===
+                                deletedName
+                            ) {
+
+                                candidate.data
+                                    .catchNext =
+                                    '';
+
+                                candidate.data
+                                    .catchEnabled =
+                                    false;
+
+
+                                editor
+                                    .updateNodeDataFromId(
+                                        candidate.id,
+                                        candidate.data
+                                    );
+                            }
+                        }
+                    );
 
 
                 if (
@@ -1106,20 +1894,27 @@
 
 
                     startNodeId =
-                        remaining[0] || null;
+                        remaining[0] ||
+                        null;
                 }
 
 
-                selectedNodeId = null;
+                selectedNodeId =
+                    null;
 
 
-                propertiesForm.classList.add(
-                    'd-none'
-                );
+                propertiesForm
+                    .classList
+                    .add(
+                        'd-none'
+                    );
 
-                propertiesEmpty.classList.remove(
-                    'd-none'
-                );
+
+                propertiesEmpty
+                    .classList
+                    .remove(
+                        'd-none'
+                    );
 
 
                 updateCanvasStatus();
@@ -1138,47 +1933,7 @@
 
 
     // =========================================================
-    // EVENTOS DE CONEXIONES
-    // =========================================================
-
-    editor.on(
-        'connectionCreated',
-        () => {
-
-            updateJsonPreview();
-        }
-    );
-
-
-    editor.on(
-        'connectionRemoved',
-        () => {
-
-            updateJsonPreview();
-        }
-    );
-
-
-    editor.on(
-        'nodeMoved',
-        () => {
-
-            updateJsonPreview();
-        }
-    );
-
-
-    editor.on(
-        'nodeRemoved',
-        () => {
-
-            updateCanvasStatus();
-        }
-    );
-
-
-    // =========================================================
-    // ENCONTRAR DESTINO DE UNA SALIDA
+    // DESTINO DE UNA CONEXIÓN
     // =========================================================
 
     function getOutputTarget(
@@ -1187,39 +1942,45 @@
     ) {
 
         const connections =
-            node.outputs?.[outputName]
-                ?.connections || [];
+            node.outputs
+                ?.[outputName]
+                ?.connections ||
+            [];
 
 
         if (
             connections.length === 0
         ) {
+
             return null;
         }
 
 
         const targetId =
             String(
-                connections[0].node
+                connections[0]
+                    .node
             );
 
 
         const targetNode =
-            editor.getNodeFromId(
-                targetId
-            );
+            editor
+                .getNodeFromId(
+                    targetId
+                );
 
 
         return (
             targetNode
                 ?.data
-                ?.stateName || null
+                ?.stateName ||
+            null
         );
     }
 
 
     // =========================================================
-    // CONVERTIR DRAWFLOW A ASL
+    // CONVERTIR DRAWFLOW A WORKFLOW JSON
     // =========================================================
 
     function buildWorkflowDefinition() {
@@ -1230,9 +1991,11 @@
 
         const definition = {
 
-            StartAt: null,
+            StartAt:
+                null,
 
-            States: {}
+            States:
+                {}
         };
 
 
@@ -1242,14 +2005,18 @@
         ) {
 
             definition.StartAt =
-                nodes[startNodeId]
+                nodes[
+                    startNodeId
+                ]
                     .data
                     .stateName;
         }
 
 
         Object
-            .entries(nodes)
+            .entries(
+                nodes
+            )
             .forEach(
                 ([id, node]) => {
 
@@ -1258,22 +2025,79 @@
 
 
                     const state = {
-                        Type: data.type
+
+                        Type:
+                            data.type
                     };
 
 
-                    // =========================================
+                    // =================================================
                     // TASK
-                    // =========================================
+                    // =================================================
 
                     if (
-                        data.type === 'Task'
+                        data.type ===
+                        'Task'
                     ) {
 
                         state.Resource =
                             data.resource;
 
 
+                        // ---------------------------------------------
+                        // RETRY
+                        // ---------------------------------------------
+
+                        if (
+                            data.retryEnabled
+                        ) {
+
+                            state.Retry = [
+                                {
+
+                                    ErrorEquals: [
+                                        'States.ALL'
+                                    ],
+
+                                    IntervalSeconds:
+                                        data.retryIntervalSeconds ??
+                                        1,
+
+                                    MaxAttempts:
+                                        data.retryMaxAttempts ??
+                                        3,
+
+                                    BackoffRate:
+                                        data.retryBackoffRate ??
+                                        2
+                                }
+                            ];
+                        }
+
+
+                        // ---------------------------------------------
+                        // CATCH
+                        // ---------------------------------------------
+
+                        if (
+                            data.catchEnabled &&
+                            data.catchNext
+                        ) {
+
+                            state.Catch = [
+                                {
+
+                                    ErrorEquals: [
+                                        'States.ALL'
+                                    ],
+
+                                    Next:
+                                        data.catchNext
+                                }
+                            ];
+                        }
+
+
                         const next =
                             getOutputTarget(
                                 node,
@@ -1282,18 +2106,20 @@
 
 
                         if (next) {
+
                             state.Next =
                                 next;
                         }
                     }
 
 
-                    // =========================================
+                    // =================================================
                     // PASS
-                    // =========================================
+                    // =================================================
 
                     if (
-                        data.type === 'Pass'
+                        data.type ===
+                        'Pass'
                     ) {
 
                         const next =
@@ -1304,18 +2130,20 @@
 
 
                         if (next) {
+
                             state.Next =
                                 next;
                         }
                     }
 
 
-                    // =========================================
+                    // =================================================
                     // WAIT
-                    // =========================================
+                    // =================================================
 
                     if (
-                        data.type === 'Wait'
+                        data.type ===
+                        'Wait'
                     ) {
 
                         state.Seconds =
@@ -1330,15 +2158,16 @@
 
 
                         if (next) {
+
                             state.Next =
                                 next;
                         }
                     }
 
 
-                    // =========================================
+                    // =================================================
                     // PARALLEL
-                    // =========================================
+                    // =================================================
 
                     if (
                         data.type ===
@@ -1357,15 +2186,16 @@
 
 
                         if (next) {
+
                             state.Next =
                                 next;
                         }
                     }
 
 
-                    // =========================================
+                    // =================================================
                     // CHOICE
-                    // =========================================
+                    // =================================================
 
                     if (
                         data.type ===
@@ -1418,25 +2248,29 @@
                     }
 
 
-                    // =========================================
+                    // =================================================
                     // FAIL
-                    // =========================================
+                    // =================================================
 
                     if (
-                        data.type === 'Fail'
+                        data.type ===
+                        'Fail'
                     ) {
 
                         state.Error =
                             data.error;
+
 
                         state.Cause =
                             data.cause;
                     }
 
 
-                    definition.States[
-                        data.stateName
-                    ] = state;
+                    definition
+                        .States[
+                            data.stateName
+                        ] =
+                        state;
                 }
             );
 
@@ -1446,7 +2280,7 @@
 
 
     // =========================================================
-    // JSON
+    // JSON PREVIEW
     // =========================================================
 
     function updateJsonPreview() {
@@ -1470,15 +2304,24 @@
 
                 updateJsonPreview();
 
-                jsonSection.classList.remove(
-                    'd-none'
-                );
+
+                jsonSection
+                    .classList
+                    .remove(
+                        'd-none'
+                    );
 
 
-                jsonSection.scrollIntoView({
-                    behavior: 'smooth',
-                    block: 'start'
-                });
+                jsonSection
+                    .scrollIntoView(
+                        {
+                            behavior:
+                                'smooth',
+
+                            block:
+                                'start'
+                        }
+                    );
             }
         );
 
@@ -1491,15 +2334,17 @@
             'click',
             () => {
 
-                jsonSection.classList.add(
-                    'd-none'
-                );
+                jsonSection
+                    .classList
+                    .add(
+                        'd-none'
+                    );
             }
         );
 
 
     // =========================================================
-    // VALIDACIÓN
+    // VALIDAR WORKFLOW
     // =========================================================
 
     function validateWorkflow() {
@@ -1508,10 +2353,13 @@
             buildWorkflowDefinition();
 
 
-        const errors = [];
+        const errors =
+            [];
 
 
-        if (!definition.StartAt) {
+        if (
+            !definition.StartAt
+        ) {
 
             errors.push(
                 'No existe un estado inicial.'
@@ -1524,7 +2372,8 @@
 
 
         if (
-            Object.keys(states).length ===
+            Object.keys(states)
+                .length ===
             0
         ) {
 
@@ -1535,9 +2384,15 @@
 
 
         Object
-            .entries(states)
+            .entries(
+                states
+            )
             .forEach(
                 ([name, state]) => {
+
+                    // ---------------------------------------------
+                    // ESTADOS QUE REQUIEREN NEXT
+                    // ---------------------------------------------
 
                     if (
                         [
@@ -1545,9 +2400,10 @@
                             'Pass',
                             'Wait',
                             'Parallel'
-                        ].includes(
-                            state.Type
-                        )
+                        ]
+                            .includes(
+                                state.Type
+                            )
                     ) {
 
                         if (!state.Next) {
@@ -1559,39 +2415,154 @@
                     }
 
 
+                    // ---------------------------------------------
+                    // TASK
+                    // ---------------------------------------------
+
                     if (
                         state.Type ===
                         'Task'
                     ) {
 
-                        const validResources = [
-                            'task:verificar_stock',
-                            'task:demo_procesar_pago',
-                            'task:generar_factura',
-                            'task:enviar_correo',
-                            'task:validar_pedido',
-                            'task:procesar_pago'
-                        ];
-
-
-                        if (!state.Resource) {
+                        if (
+                            !state.Resource
+                        ) {
 
                             errors.push(
                                 `${name}: Task necesita Resource.`
                             );
 
                         } else if (
-                            !validResources.includes(
-                                state.Resource
-                            )
+                            !VALID_RESOURCES
+                                .includes(
+                                    state.Resource
+                                )
                         ) {
 
                             errors.push(
                                 `${name}: Resource no registrado: ${state.Resource}.`
                             );
                         }
+
+
+                        // -----------------------------------------
+                        // RETRY
+                        // -----------------------------------------
+
+                        if (
+                            state.Retry
+                        ) {
+
+                            const retry =
+                                state.Retry[0];
+
+
+                            if (
+                                !Array.isArray(
+                                    retry.ErrorEquals
+                                ) ||
+                                retry.ErrorEquals
+                                    .length ===
+                                0
+                            ) {
+
+                                errors.push(
+                                    `${name}: Retry necesita ErrorEquals.`
+                                );
+                            }
+
+
+                            if (
+                                !Number.isInteger(
+                                    retry.MaxAttempts
+                                ) ||
+                                retry.MaxAttempts <
+                                0
+                            ) {
+
+                                errors.push(
+                                    `${name}: MaxAttempts debe ser un entero >= 0.`
+                                );
+                            }
+
+
+                            if (
+                                !Number.isFinite(
+                                    retry.IntervalSeconds
+                                ) ||
+                                retry.IntervalSeconds <
+                                0
+                            ) {
+
+                                errors.push(
+                                    `${name}: IntervalSeconds debe ser >= 0.`
+                                );
+                            }
+
+
+                            if (
+                                !Number.isFinite(
+                                    retry.BackoffRate
+                                ) ||
+                                retry.BackoffRate <
+                                1
+                            ) {
+
+                                errors.push(
+                                    `${name}: BackoffRate debe ser >= 1.`
+                                );
+                            }
+                        }
+
+
+                        // -----------------------------------------
+                        // CATCH
+                        // -----------------------------------------
+
+                        if (
+                            state.Catch
+                        ) {
+
+                            const catchRule =
+                                state.Catch[0];
+
+
+                            if (
+                                !catchRule.Next
+                            ) {
+
+                                errors.push(
+                                    `${name}: Catch necesita un estado de destino.`
+                                );
+
+                            } else if (
+                                !states[
+                                    catchRule.Next
+                                ]
+                            ) {
+
+                                errors.push(
+                                    `${name}: Catch apunta a un estado inexistente: ${catchRule.Next}.`
+                                );
+                            }
+
+
+                            if (
+                                catchRule.Next ===
+                                name
+                            ) {
+
+                                errors.push(
+                                    `${name}: Catch no puede apuntar al mismo estado.`
+                                );
+                            }
+                        }
                     }
 
+
+                    // ---------------------------------------------
+                    // CHOICE
+                    // ---------------------------------------------
 
                     if (
                         state.Type ===
@@ -1600,7 +2571,8 @@
 
                         if (
                             !state
-                                .Choices?.[0]
+                                .Choices
+                                ?.[0]
                                 ?.Next
                         ) {
 
@@ -1621,9 +2593,16 @@
                     }
 
 
+                    // ---------------------------------------------
+                    // PARALLEL
+                    // ---------------------------------------------
+
                     if (
-                        state.Type === 'Parallel' &&
-                        state.Branches.length === 0
+                        state.Type ===
+                        'Parallel' &&
+                        state.Branches
+                            .length ===
+                        0
                     ) {
 
                         errors.push(
@@ -1635,12 +2614,15 @@
 
 
         if (
-            errors.length > 0
+            errors.length >
+            0
         ) {
 
             showMessage(
                 'Workflow inválido:\n\n' +
-                errors.join('\n'),
+                errors.join(
+                    '\n'
+                ),
                 'danger'
             );
 
@@ -1670,7 +2652,7 @@
 
 
     // =========================================================
-    // LIMPIAR
+    // LIMPIAR LIENZO
     // =========================================================
 
     document
@@ -1688,7 +2670,8 @@
         if (
             Object.keys(
                 getNodes()
-            ).length > 0
+            ).length >
+            0
         ) {
 
             if (
@@ -1696,6 +2679,7 @@
                     '¿Eliminar todos los estados?'
                 )
             ) {
+
                 return;
             }
         }
@@ -1703,20 +2687,29 @@
 
         editor.clear();
 
-        startNodeId = null;
 
-        selectedNodeId = null;
+        startNodeId =
+            null;
 
-        nodeCounter = 1;
+        selectedNodeId =
+            null;
+
+        nodeCounter =
+            1;
 
 
-        propertiesForm.classList.add(
-            'd-none'
-        );
+        propertiesForm
+            .classList
+            .add(
+                'd-none'
+            );
 
-        propertiesEmpty.classList.remove(
-            'd-none'
-        );
+
+        propertiesEmpty
+            .classList
+            .remove(
+                'd-none'
+            );
 
 
         updateCanvasStatus();
@@ -1726,7 +2719,7 @@
 
 
     // =========================================================
-    // NUEVO
+    // NUEVO WORKFLOW
     // =========================================================
 
     document
@@ -1740,7 +2733,8 @@
                 if (
                     Object.keys(
                         getNodes()
-                    ).length > 0
+                    ).length >
+                    0
                 ) {
 
                     if (
@@ -1748,6 +2742,7 @@
                             '¿Crear un workflow nuevo?'
                         )
                     ) {
+
                         return;
                     }
                 }
@@ -1755,17 +2750,37 @@
 
                 editor.clear();
 
-                startNodeId = null;
 
-                selectedNodeId = null;
+                startNodeId =
+                    null;
 
-                nodeCounter = 1;
+                selectedNodeId =
+                    null;
+
+                nodeCounter =
+                    1;
 
 
-                workflowName.value = '';
-
-                workflowDescription.value =
+                workflowName.value =
                     '';
+
+                workflowDescription
+                    .value =
+                    '';
+
+
+                propertiesForm
+                    .classList
+                    .add(
+                        'd-none'
+                    );
+
+
+                propertiesEmpty
+                    .classList
+                    .remove(
+                        'd-none'
+                    );
 
 
                 updateCanvasStatus();
@@ -1778,7 +2793,7 @@
 
 
     // =========================================================
-    // GUARDAR
+    // GUARDAR WORKFLOW
     // =========================================================
 
     document
@@ -1807,6 +2822,7 @@
                 if (
                     !validateWorkflow()
                 ) {
+
                     return;
                 }
 
@@ -1837,6 +2853,10 @@
         );
 
 
+    // =========================================================
+    // CONFIRMAR GUARDADO
+    // =========================================================
+
     document
         .getElementById(
             'btn-confirm-save'
@@ -1845,11 +2865,10 @@
             'click',
             async () => {
 
-                // =============================================
-                // VALIDAR DE NUEVO ANTES DE GUARDAR
-                // =============================================
+                if (
+                    !validateWorkflow()
+                ) {
 
-                if (!validateWorkflow()) {
                     return;
                 }
 
@@ -1866,10 +2885,6 @@
                     );
 
 
-                // =============================================
-                // CREAR PAYLOAD
-                // =============================================
-
                 const payload = {
 
                     name:
@@ -1885,15 +2900,14 @@
                     definition:
                         buildWorkflowDefinition(),
 
-                    is_active: true
+                    is_active:
+                        true
                 };
 
 
-                // =============================================
-                // DESACTIVAR BOTÓN
-                // =============================================
+                button.disabled =
+                    true;
 
-                button.disabled = true;
 
                 const originalText =
                     button.textContent;
@@ -1906,23 +2920,23 @@
                 message.className =
                     'small text-secondary';
 
+
                 message.textContent =
                     'Enviando workflow al servidor...';
 
 
                 try {
 
-                    // =========================================
-                    // ENVIAR AL ENDPOINT PHP
-                    // =========================================
-
                     const response =
                         await fetch(
                             'api/workflow-save.php',
                             {
-                                method: 'POST',
+
+                                method:
+                                    'POST',
 
                                 headers: {
+
                                     'Content-Type':
                                         'application/json',
 
@@ -1938,29 +2952,22 @@
                         );
 
 
-                    // =========================================
-                    // LEER RESPUESTA
-                    // =========================================
-
                     let result;
 
 
                     try {
 
                         result =
-                            await response.json();
+                            await response
+                                .json();
 
-                    } catch (error) {
+                    } catch {
 
                         throw new Error(
                             'El servidor devolvió una respuesta inválida.'
                         );
                     }
 
-
-                    // =========================================
-                    // ERROR DEL SERVIDOR
-                    // =========================================
 
                     if (
                         !response.ok ||
@@ -1974,16 +2981,13 @@
                     }
 
 
-                    // =========================================
-                    // GUARDADO CORRECTO
-                    // =========================================
-
                     const workflow =
                         result.workflow;
 
 
                     message.className =
                         'small text-success';
+
 
                     message.textContent =
                         `Workflow guardado correctamente. ID: ${workflow.id}`;
@@ -1994,10 +2998,6 @@
                         'success'
                     );
 
-
-                    // =========================================
-                    // CERRAR MODAL
-                    // =========================================
 
                     const modalElement =
                         document.getElementById(
@@ -2012,23 +3012,17 @@
                             );
 
 
-                    // Esperamos un pequeño momento solamente
-                    // para que el usuario vea el mensaje.
                     setTimeout(
                         () => {
 
                             if (modal) {
+
                                 modal.hide();
                             }
 
 
-                            // =================================
-                            // REDIRIGIR AL WORKFLOW
-                            // =================================
-
                             window.location.href =
                                 `workflow-view.php?id=${workflow.id}`;
-
                         },
                         700
                     );
@@ -2070,28 +3064,12 @@
 
 
     // =========================================================
-    // ESCAPAR HTML
-    // =========================================================
-
-    function escapeHtml(value) {
-
-        const div =
-            document.createElement(
-                'div'
-            );
-
-        div.textContent =
-            value ?? '';
-
-        return div.innerHTML;
-    }
-
-
-    // =========================================================
     // INICIO
     // =========================================================
 
     updateCanvasStatus();
+
+    updateStartStateStyles();
 
     updateJsonPreview();
 

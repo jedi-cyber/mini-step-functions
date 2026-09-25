@@ -494,6 +494,8 @@ page_start('Diseñador de Workflow');
                     class="state-properties d-none"
                 >
 
+                    <!-- RESOURCE -->
+
                     <div class="mb-3">
 
                         <label
@@ -507,6 +509,7 @@ page_start('Diseñador de Workflow');
                             class="form-select font-monospace"
                             id="property-resource"
                         >
+
                             <option value="task:verificar_stock">
                                 task:verificar_stock
                             </option>
@@ -530,10 +533,174 @@ page_start('Diseñador de Workflow');
                             <option value="task:procesar_pago">
                                 task:procesar_pago
                             </option>
+
                         </select>
 
                         <div class="form-text">
                             Selecciona una tarea registrada en el backend.
+                        </div>
+
+                    </div>
+
+
+                    <!-- ============================================= -->
+                    <!-- MANEJO DE ERRORES -->
+                    <!-- ============================================= -->
+
+                    <hr>
+
+                    <h4 class="h6 mb-3">
+                        Manejo de errores
+                    </h4>
+
+
+                    <!-- ============================================= -->
+                    <!-- RETRY -->
+                    <!-- ============================================= -->
+
+                    <div class="form-check mb-3">
+
+                        <input
+                            class="form-check-input"
+                            type="checkbox"
+                            id="property-retry-enabled"
+                        >
+
+                        <label
+                            class="form-check-label"
+                            for="property-retry-enabled"
+                        >
+                            Activar Retry
+                        </label>
+
+                    </div>
+
+
+                    <div
+                        id="retry-properties"
+                        class="border rounded p-3 mb-3 d-none"
+                    >
+
+                        <div class="mb-3">
+
+                            <label
+                                for="property-retry-max-attempts"
+                                class="form-label"
+                            >
+                                Intentos máximos
+                            </label>
+
+                            <input
+                                type="number"
+                                class="form-control"
+                                id="property-retry-max-attempts"
+                                min="0"
+                                value="3"
+                            >
+
+                        </div>
+
+
+                        <div class="mb-3">
+
+                            <label
+                                for="property-retry-interval"
+                                class="form-label"
+                            >
+                                Intervalo inicial (segundos)
+                            </label>
+
+                            <input
+                                type="number"
+                                class="form-control"
+                                id="property-retry-interval"
+                                min="0"
+                                step="0.1"
+                                value="1"
+                            >
+
+                        </div>
+
+
+                        <div class="mb-3">
+
+                            <label
+                                for="property-retry-backoff"
+                                class="form-label"
+                            >
+                                Backoff rate
+                            </label>
+
+                            <input
+                                type="number"
+                                class="form-control"
+                                id="property-retry-backoff"
+                                min="1"
+                                step="0.1"
+                                value="2"
+                            >
+
+                            <div class="form-text">
+                                Multiplica el tiempo de espera después de cada fallo.
+                            </div>
+
+                        </div>
+
+                    </div>
+
+
+                    <!-- ============================================= -->
+                    <!-- CATCH -->
+                    <!-- ============================================= -->
+
+                    <div class="form-check mb-3">
+
+                        <input
+                            class="form-check-input"
+                            type="checkbox"
+                            id="property-catch-enabled"
+                        >
+
+                        <label
+                            class="form-check-label"
+                            for="property-catch-enabled"
+                        >
+                            Activar Catch
+                        </label>
+
+                    </div>
+
+
+                    <div
+                        id="catch-properties"
+                        class="border rounded p-3 mb-3 d-none"
+                    >
+
+                        <div class="mb-3">
+
+                            <label
+                                for="property-catch-next"
+                                class="form-label"
+                            >
+                                Estado de destino
+                            </label>
+
+                            <select
+                                class="form-select"
+                                id="property-catch-next"
+                            >
+
+                                <option value="">
+                                    Selecciona un estado
+                                </option>
+
+                            </select>
+
+                            <div class="form-text">
+                                Si la tarea falla y no puede recuperarse,
+                                el workflow continuará por este estado.
+                            </div>
+
                         </div>
 
                     </div>
@@ -564,6 +731,7 @@ page_start('Diseñador de Workflow');
                             class="form-control"
                             id="property-seconds"
                             min="0"
+                            step="0.1"
                             value="1"
                         >
 
@@ -799,7 +967,9 @@ page_start('Diseñador de Workflow');
         id="json-section"
     >
 
-        <div class="card-header d-flex justify-content-between align-items-center">
+        <div
+            class="card-header d-flex justify-content-between align-items-center"
+        >
 
             <strong>
                 Definición JSON
@@ -905,7 +1075,10 @@ page_start('Diseñador de Workflow');
 </div>
 
 
-<!-- Bootstrap JS para el modal -->
+<!-- ========================================================= -->
+<!-- SCRIPTS -->
+<!-- ========================================================= -->
+
 <script
     src="vendor/bootstrap/bootstrap.bundle.min.js"
 ></script>
@@ -914,7 +1087,6 @@ page_start('Diseñador de Workflow');
     src="https://cdn.jsdelivr.net/npm/drawflow@0.0.60/dist/drawflow.min.js"
 ></script>
 
-<!-- Lógica del diseñador -->
 <script
     src="js/designer.js"
     defer
